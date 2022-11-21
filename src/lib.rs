@@ -5,6 +5,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use std::{rc::Rc, cell::RefCell, string::FromUtf16Error};
 use std::io::Read;
 use flate2::read::ZlibDecoder;
+use cp437::Reader;
 
 pub type ParamType<T> = RefCell<Option<Rc<T>>>;
 
@@ -445,6 +446,14 @@ pub fn decode_string<'a>(
      bytes: &'a [u8],
      label: &'a str
 ) -> KResult<String> {
+
+    if label == "CP437" {
+        let vec_bytes : Vec<u8> = bytes.iter().cloned().collect::<Vec<u8>>();
+        let len = vec_bytes.len();
+        let mut b = vec_bytes.bytes();
+        let mut r = Reader::new(&mut b);
+        return Ok(r.consume(len));
+    }
 
     if let Some(enc) = encoding_from_whatwg_label(label) {
         return enc.decode(bytes, DecoderTrap::Replace).map_err(|e| KError::Encoding { desc: e.to_string() });
