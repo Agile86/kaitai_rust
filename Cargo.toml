@@ -1,7 +1,11 @@
 [package]
 name = "kaitai"
 version = "0.1.0"
-authors = ["Bradlee Speice <bradlee@speice.io>"]
+authors = [
+	"Bradlee Speice <bradlee@speice.io>",
+	"Oleh Dolhov <oleg.dolgov@gmail.com>",
+	"Vitaly Reshetyuk <vitaly.askz.maknii@gmail.com>",
+]
 edition = "2018"
 
 [dependencies]
