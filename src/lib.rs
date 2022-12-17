@@ -676,7 +676,8 @@ mod tests {
 
     #[derive(Default, Debug, Clone)]
     struct ChildStruct {
-        parent: RefCell<RootStruct>,
+          t: RefCell<u32>,
+          a: RefCell<GrandChildStruct>,
     }
 
     impl<'r, 's: 'r> KStruct<'r, 's> for ChildStruct {
@@ -689,28 +690,17 @@ mod tests {
                 _root: Option<Rc<Self::Root>>,
                 _parent: Option<&'r Self::Parent>,
             ) -> KResult<()> {
-                if let Some(parent) = _parent {
-                    *self.parent.borrow_mut() = parent.clone();
-                }
-
+                *self.t.borrow_mut() = 1;
+                let gcs: GrandChildStruct = GrandChildStruct::read_into(_io, _root.clone(), Some(self)).unwrap();
+                *self.t.borrow_mut() = 2;
+                let gcs: GrandChildStruct = GrandChildStruct::read_into(_io, _root.clone(), Some(self)).unwrap();
                 Ok(())
         }
     }
 
-    #[test]
-    fn root_is_parent() {
-        let b = [];
-        let reader = BytesReader::new(&b[..]);
-        let root_struct = Rc::<RootStruct>::new(RootStruct::read_into(&reader, None, None).unwrap());
-        let ors = Some(root_struct.clone());
-        let child_struct: ChildStruct = ChildStruct::read_into(&reader, ors, Some(&*root_struct.clone())).unwrap();
-
-        assert_eq!(*child_struct.parent.borrow(), *root_struct);
-    }
-
     #[derive(Default, Debug, Clone)]
     struct GrandChildStruct {
-        parent: RefCell<ChildStruct>,
+        v: u32,
     }
 
     impl<'r, 's: 'r> KStruct<'r, 's> for GrandChildStruct {
@@ -723,9 +713,7 @@ mod tests {
                 _root: Option<Rc<Self::Root>>,
                 _parent: Option<&'r Self::Parent>,
             ) -> KResult<()> {
-                if let Some(parent) = _parent {
-                    *self.parent.borrow_mut() = parent.clone();
-                }
+                println!("{:p}, _parent {:?}, {}", _parent.unwrap(), _parent, *_parent.unwrap().t.borrow());
 
                 Ok(())
         }
@@ -737,9 +725,9 @@ mod tests {
         let reader = BytesReader::new(&b[..]);
         let root_struct = Rc::<RootStruct>::new(RootStruct::read_into(&reader, None, None).unwrap());
         let child_struct: ChildStruct = ChildStruct::read_into(&reader,Some(root_struct.clone ()), Some(&*root_struct.clone())).unwrap();
-        let grand_child_struct: GrandChildStruct = GrandChildStruct::read_into(&reader, Some(root_struct.clone()), Some(&child_struct.clone())).unwrap();
+        //let grand_child_struct: GrandChildStruct = GrandChildStruct::read_into(&reader, Some(root_struct.clone()), Some(&child_struct.clone())).unwrap();
 
-        assert_eq!(*child_struct.parent.borrow(), *root_struct);
+        //assert_eq!(*child_struct.parent.borrow(), *root_struct);
     }
 
 }
