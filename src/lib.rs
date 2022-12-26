@@ -1,5 +1,8 @@
-#![feature(type_name_of_val)]
 #![allow(unused)]
+
+#![cfg_attr(feature = "unstable", feature(type_name_of_val))]
+#[cfg(feature = "unstable")]
+use std::any::type_name_of_val;
 
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use unicode_segmentation::UnicodeSegmentation;
@@ -7,7 +10,7 @@ use std::{  {rc::{Rc, Weak},
             cell::RefCell, string::FromUtf16Error},
             io::Read,
             ops::{Deref, DerefMut},
-            any::{Any, type_name_of_val, type_name}, 
+            any::{Any, type_name},
             borrow::Borrow,
         };
 use flate2::read::ZlibDecoder;
@@ -80,7 +83,15 @@ impl<T> SharedType<T> {
 
 impl<T: PartialEq> PartialEq for SharedType<T> {
     fn eq(&self, other: &Self) -> bool {
-        *self.get() == *other.get()
+        if let Some(x) = &*self.0.borrow() {
+            if let Some(y) = &*other.0.borrow() {
+                Rc::ptr_eq(&x, &y)
+            } else {
+                false // x!=None, y==None
+            }
+        } else {
+            other.0.borrow().is_none()
+        }
     }
 }
 
@@ -125,7 +136,10 @@ pub trait KStruct<'r, 's: 'r>: Default {
                         SharedType::<U>::new(Rc::clone(as_result))
                     }
                     None => {
+                        #[cfg(feature = "unstable")]
                         panic!("`{}` is not a '{}' type", type_name_of_val(&t), type_name::<Rc<U>>());
+                        #[cfg(not(feature = "unstable"))]
+                        panic!("downcast failed");
                     }
                 }
             };
