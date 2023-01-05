@@ -30,8 +30,8 @@ fn same_parent() {
     let b = [];
     let reader = BytesReader::new(&b[..]);
     let root_struct: Rc<RootStruct> = RootStruct::read_into(&reader, None, None).unwrap();
-    let child = root_struct.as_ref().child.borrow().get();
-    let parent = child.parent.borrow().get();
+    let child = root_struct.as_ref().child.borrow().get().unwrap();
+    let parent = child.parent.borrow().get().unwrap();
     assert_eq!(*root_struct.as_ref(), *parent.as_ref());
 }
 
@@ -92,8 +92,8 @@ fn root_is_parent() {
     let reader = BytesReader::new(&b[..]);
     let root_struct: Rc<RootStruct> = RootStruct::read_into(&reader, None, None).unwrap();
     println!("{}", *root_struct.data.borrow());
-    println!("{}", *root_struct.child.borrow().get().data.borrow());
-    println!("{}", *root_struct.child.borrow().get().child2.borrow().get().data.borrow());
+    println!("{}", *root_struct.child.borrow().get().unwrap().data.borrow());
+    println!("{}", *root_struct.child.borrow().get().unwrap().child2.borrow().get().unwrap().data.borrow());
 
     // let ors = Some(root_struct.clone());
     // let child_struct: ChildStruct = ChildStruct::read_into(&reader, ors, Some(&*root_struct.clone())).unwrap();
